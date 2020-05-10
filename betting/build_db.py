@@ -1,4 +1,5 @@
 from classes import Game, Statistics, Prediction
+import argparse
 from fuzzywuzzy import process, fuzz
 import sys
 import os
@@ -89,20 +90,28 @@ def create_games_list(stats, preds):
     return games
 
 
+def get_args():
+    parser = argparse.ArgumentParser(description='Use statistic and prediction files to generate a database in which'
+                                                 'they are matched.')
+    parser.add_argument('statistics_filepath', help='Absolute path to base directory of the output of '
+                                                    'scrape_results.py')
+    parser.add_argument('predictions_filepath', help='Absolute path to the file output of scrape_predictions.py')
+    parser.add_argument('-l', '--lookup', help='Optional absolute path to file which will be used to generate '
+                                               'a lookup table for games, quickening the runtime')
+    args = parser.parse_args()
+
+    if not os.path.isdir(args.statistics_filepath):
+        raise NotADirectoryError("First argument 'statistics_filepath' must be path to matches directory")
+    if not os.path.exists(args.predictions_filepath):
+        raise FileNotFoundError("Second argument must be path to prediction file")
+
+    return args.statistics_filepath, args.predictions_filepath, args.lookup
+
+
 def main():
     start = datetime.now()  # TODO: REMOVE
 
-    try:
-        stats_fp = sys.argv[1]
-        preds_fp = sys.argv[2]
-    except IndexError:
-        raise IndexError("Script's arguments should be matches directory and"
-                         "prediction file paths, respectively")
-
-    if not os.path.isdir(stats_fp):
-        raise NotADirectoryError("First argument must be path to matches directory")
-    if not os.path.exists(preds_fp):
-        raise FileNotFoundError("Second argument must be path to prediction file")
+    stats_fp, preds_fp, lookp_fp = get_args()
 
     stats = create_stats_list(stats_fp)
     print("stats: ", len(stats))
