@@ -1,3 +1,5 @@
+# TODO: only save delta
+
 import tweepy
 import re
 import csv
