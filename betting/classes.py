@@ -1,4 +1,6 @@
 from fuzzywuzzy import process, fuzz
+import datetime as dt
+from utils import string_to_date
 
 # switches: SWITCH_SW[is_main]
 HOME_TEAM_SW = {0: 'Home', 1: 'HomeTeam'}
@@ -72,12 +74,27 @@ class Prediction:
 
 class Matcher:
     def __init__(self, stats, preds):
-        self.stats = stats
         self.preds = preds
+        self.stats = self.filter_stats(stats)
 
         self.home_to_stats = self.get_home_to_stats()
         self.away_to_stats = self.get_away_to_stats()
         self.date_to_stats = self.get_date_to_stats()
+
+    def filter_stats(self, stats):
+        """
+        cut runtime from 24s -> 15s
+        :param stats:
+        :return: list of Statistics objects
+        """
+        pred_dates = [string_to_date(d.date) for d in self.preds]
+
+        oldest_pred = dt.date.today()
+        for date in pred_dates:
+            if date < oldest_pred:
+                oldest_pred = date
+
+        return [s for s in stats if not string_to_date(s.date) < oldest_pred]
 
     def get_home_to_stats(self):
         home_teams = list(set([s.home_team for s in self.stats]))
