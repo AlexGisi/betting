@@ -1,3 +1,5 @@
+from fuzzywuzzy import process, fuzz
+
 # switches: SWITCH_SW[is_main]
 HOME_TEAM_SW = {0: 'Home', 1: 'HomeTeam'}
 AWAY_TEAM_SW = {0: 'Away', 1: 'AwayTeam'}
@@ -14,8 +16,8 @@ WAS_DRAW_SW = {'H': 0, 'D': 1, 'A': 0}
 
 
 class Game:
-    def __init__(self, stats, pred):
-        self.statistics = stats
+    def __init__(self, stat, pred):
+        self.statistics = stat
         self.prediction_info = pred
 
 
@@ -63,3 +65,53 @@ class Prediction:
         self.home_chance_neutral = pred_d['HOME TEAM CHANCE NEUTRAL']
         self.draw_chance_neutral = pred_d['DRAW CHANCE NEUTRAL']
         self.away_chance_neutral = pred_d['AWAY TEAM CHANCE NEUTRAL']
+
+    def get_stat_match(self, home_stat_dict, away_stat_dict, date_stats_dict):
+        pass
+
+
+class Matcher:
+    def __init__(self, stats, preds):
+        self.stats = stats
+        self.preds = preds
+
+        self.home_to_stats = self.get_home_to_stats()
+        self.away_to_stats = self.get_away_to_stats()
+        self.date_to_stats = self.get_date_to_stats()
+
+    def get_home_to_stats(self):
+        home_teams = list(set([s.home_team for s in self.stats]))
+        return {home: [s for s in self.stats if s.home_team == home] for home in home_teams}
+
+    def get_away_to_stats(self):
+        away_teams = list(set(s.away_team for s in self.stats))
+        return {away: [s for s in self.stats if s.away_team == away] for away in away_teams}
+
+    def get_date_to_stats(self):
+        dates = list(set(p.date for p in self.preds))
+        return {date: [s for s in self.stats if s.date == date] for date in dates}
+
+    def get_matches(self):
+        """
+        generator for Statistics, Predication pairings
+        100% accuracy (96.4% - 100% w/ 95% confidence) achieved (n=100)
+        :return: Statistics, Prediction objects
+        """
+        for pred in self.preds:
+            date_stats = self.date_to_stats[pred.date]
+            home_matched_name = process.extractOne(pred.home_team, [s.home_team for s in date_stats],
+                                                   scorer=fuzz.partial_ratio, score_cutoff=75)
+            away_matched_name = process.extractOne(pred.away_team, [s.away_team for s in date_stats],
+                                                   scorer=fuzz.partial_ratio, score_cutoff=75)
+
+            if home_matched_name and away_matched_name:
+                home_matched_name, away_matched_name = home_matched_name[0], away_matched_name[0]
+            else:
+                continue
+
+            home_matched_stat = [s for s in self.home_to_stats[home_matched_name] if s.date == pred.date][0]
+            away_matched_stat = [s for s in self.away_to_stats[away_matched_name] if s.date == pred.date][0]
+
+            if home_matched_stat.home_team == away_matched_stat.home_team and \
+                    home_matched_stat.away_team == away_matched_stat.away_team:
+                yield home_matched_stat, pred
