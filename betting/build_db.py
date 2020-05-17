@@ -2,7 +2,6 @@ from classes import Game, Statistics, Prediction, Matcher
 import argparse
 import os
 import csv
-from datetime import datetime  # TODO: REMOVE
 
 
 MAIN_COUNTRIES = ['England', 'Scotland', 'Germany', 'Italy', 'Spain', 'France', 'Netherlands', 'Belgium', 'Portugal',
@@ -91,29 +90,17 @@ def get_args():
     return args.statistics_filepath, args.predictions_filepath
 
 
-def main():
-    start = datetime.now()  # TODO: REMOVE
-
-    stats_fp, preds_fp = get_args()
+def main(stats_fp=None, preds_fp=None):
+    if not (stats_fp and preds_fp):
+        stats_fp, preds_fp = get_args()
 
     stats = create_stats_list(stats_fp)
-    print("stats: ", len(stats))
-
     preds = create_preds_list(preds_fp)
-    print("preds: ", len(preds))
-
     games = create_games_list(stats, preds)
 
-    # TODO: REMOVE
-    end = datetime.now()
-    print('Duration: {}'.format(end - start))
-
-    print("games: ", len(games))
-    for game in games:
-        print("\n\n----GAME----")
-        print('stats: ', game.statistics.date, game.statistics.home_team, '-', game.statistics.away_team)
-        print('pred: ', game.prediction_info.date, game.prediction_info.home_team, '-', game.prediction_info.away_team)
+    return games
 
 
 if __name__ == '__main__':
-    main()
+    for game in main():
+        print(game)

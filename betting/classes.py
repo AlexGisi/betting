@@ -22,6 +22,9 @@ class Game:
         self.statistics = stat
         self.prediction_info = pred
 
+    def __str__(self):
+        return self.statistics.date + ': ' + self.statistics.home_team + ' vs. ' + self.statistics.away_team
+
 
 class Statistics:
     def __init__(self, stat_d, is_main):
@@ -67,9 +70,6 @@ class Prediction:
         self.home_chance_neutral = pred_d['HOME TEAM CHANCE NEUTRAL']
         self.draw_chance_neutral = pred_d['DRAW CHANCE NEUTRAL']
         self.away_chance_neutral = pred_d['AWAY TEAM CHANCE NEUTRAL']
-
-    def get_stat_match(self, home_stat_dict, away_stat_dict, date_stats_dict):
-        pass
 
 
 class Matcher:
